@@ -1,0 +1,23 @@
+{
+  "name": "hello-websockets",
+  "version": "1.0.0",
+  "description": "Getting started with Web Sockets",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumeetweb/Hello-WebSockets.git"
+  },
+  "author": "sumeetweb",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sumeetweb/Hello-WebSockets/issues"
+  },
+  "homepage": "https://github.com/sumeetweb/Hello-WebSockets#readme",
+  "dependencies": {
+    "socket.io": "^4.5.1",
+    "ws": "^8.8.0"
+  }
+}
