@@ -1,16 +1,46 @@
-const http = require('http').createServer();
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const port = 3000;
+const server = http.createServer(express);
+const wss = new WebSocket.Server({ server })
 
-const io = require('socket.io')(http, {
-    cors: {origin: "*"}
-});
+wss.on('connection', function connection(ws) {
+  console.log(`Total Connections :  ${wss.clients.size}`);
+  ws.on('message', function incoming(data) {
+    let d = JSON.parse(data.toString());
+    // let dataObj = {
+    //     sender: d.sender,
+    //     message: d.message,
+    //     receiver: d.receiver,
+    // };
+    ws.id = d.sender;
+    console.log(JSON.stringify(d));
 
-io.on('connection', (socket) =>{
-    console.log('a user connected');
-    socket.on('message', (message) =>{
-        console.log(message);
-        io.emit('message', `${socket.id.substr(0,2)}, ${Date.now()}, ${message}`);
+    if(d.receiver === '') {
+      wss.clients.forEach(function each(client) {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(data.toString());
+        }
+      })
+    } else {
+      let sentMsg = false;
+      wss.clients.forEach(function each(client) {
+        if (client !== ws && client.readyState === WebSocket.OPEN && client.id === d.receiver) {
+          client.send(data.toString());
+          sentMsg = true;
+        }
+      })
+      if(!sentMsg) {
+        ws.send(JSON.stringify({  sender: "System", message: `${d.receiver} is offline...`, receiver: d.sender }));
+      }
 
-    });
-});
+    }
 
-http.listen(8080, () => console.log('listening on port 8080'));
+  })
+
+})
+
+server.listen(port, function() {
+  console.log(`Server is listening on ${port}!`)
+})

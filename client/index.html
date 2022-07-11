@@ -5,44 +5,83 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Demo</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
-    <script defer src="app.js"></script>
+    <title>Real Time Messaging</title>
 </head>
 
 <body>
-    <ul></ul>
-    <input type="text" placeholder="Message">
-    <button>Send</button>
-    <script type="text/javascript">
-        function timeSince(date) {
-
-            var seconds = Math.floor((new Date() - date) / 1000);
-
-            var interval = seconds / 31536000;
-
-            if (interval > 1) {
-                return Math.floor(interval) + " years";
-            }
-            interval = seconds / 2592000;
-            if (interval > 1) {
-                return Math.floor(interval) + " months";
-            }
-            interval = seconds / 86400;
-            if (interval > 1) {
-                return Math.floor(interval) + " days";
-            }
-            interval = seconds / 3600;
-            if (interval > 1) {
-                return Math.floor(interval) + " hours";
-            }
-            interval = seconds / 60;
-            if (interval > 1) {
-                return Math.floor(interval) + " minutes";
-            }
-            return Math.floor(seconds) + " seconds";
+    <h1>Real Time Messaging</h1>
+    <pre id="messages" style="height: 400px; overflow: scroll"></pre>
+    <input type="text" id="sender" placeholder="Name? Default Anonymous" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
+    <input type="text" id="messageBox" placeholder="Type your message here" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
+    <input type="text" id="receiver" placeholder="Receiver? Default Public" style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />    
+    <button id="send" title="Send Message!" style="width: 100%; height: 30px;">Send Message</button>
+    
+    <script>
+      (function() {
+        const sendBtn = document.querySelector('#send');
+        const messages = document.querySelector('#messages');
+        const sender = document.querySelector('#sender');
+        const receiver = document.querySelector('#receiver');
+        const messageBox = document.querySelector('#messageBox');
+    
+        let ws;
+    
+        function showMessage(message, sender, receiver) {
+          if(sender == ''){
+            sender = 'Anonymous';
+          }
+          if(receiver == ''){
+            receiver = '@all';
+          }
+          messages.textContent += `\n\n${sender + ' -> ' + receiver +" : "+ message}`;
+          messages.scrollTop = messages.scrollHeight;
+          messageBox.value = '';
         }
+    
+        function init() {
+          if (ws) {
+            ws.onerror = ws.onopen = ws.onclose = null;
+            ws.close();
+          }
+    
+          ws = new WebSocket('ws://localhost:3000');
+          ws.onopen = () => {
+            console.log('Connection opened!');
+          }
 
+          ws.onmessage = ({ data }) => {
+            const d = JSON.parse(data);
+            showMessage(d.message, d.sender, d.receiver);
+          }
+
+          ws.onclose = function() {
+            ws = null;
+          }
+        }
+    
+        sendBtn.onclick = function() {
+          if (!ws) {
+            showMessage("No WebSocket connection :(", "Browser", "User");
+            return ;
+          }
+
+          let dataObj = {
+            sender: sender.value,
+            message: messageBox.value,
+            receiver: '',
+          };
+
+          if(messageBox.value.length > 0) {
+            if(receiver.value != ''){
+              dataObj.receiver = receiver.value;
+            }
+            ws.send(JSON.stringify(dataObj));
+            showMessage(messageBox.value, sender.value, receiver.value);
+          }
+        }
+    
+        init();
+      })();
     </script>
 </body>
 
